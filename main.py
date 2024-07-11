@@ -10,16 +10,16 @@ results = {}
 
 mot_tracker = Sort()
 
-# load models
+# загружаем модель
 coco_model = YOLO('yolov8n.pt')# детектим  машины
 license_plate_detector = YOLO('license_plate_detector.pt') # обнаруживаем таблицу с номером
 
-# load video
+# загружаем видео
 cap = cv2.VideoCapture('./sample.mp4')
 
 vehicles = [2, 3, 5, 7] # детектим тоолько те обьекты которые нам нужны со всей базы
 
-# read frames
+
 frame_nmr = -1
 ret = True
 while ret:
@@ -27,7 +27,7 @@ while ret:
     ret, frame = cap.read()
     if ret:
         results[frame_nmr] = {}
-        # detect vehicles
+        # детектим транспортное средство
         detections = coco_model(frame)[0]
         detections_ = []
         for detection in detections.boxes.data.tolist():
@@ -35,27 +35,27 @@ while ret:
             if int(class_id) in vehicles:
                 detections_.append([x1, y1, x2, y2, score])
 
-        # track vehicles
+        # отслеживаем 
         track_ids = mot_tracker.update(np.asarray(detections_))
 
-        # detect license plates
+        # детектим номерной знак
         license_plates = license_plate_detector(frame)[0]
         for license_plate in license_plates.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = license_plate
 
-            # assign license plate to car
+            # привязываем номерной знак к машине
             xcar1, ycar1, xcar2, ycar2, car_id = get_car(license_plate, track_ids)
 
             if car_id != -1:
 
-                # crop license plate
+                # вырезаем номерной знак
                 license_plate_crop = frame[int(y1):int(y2), int(x1): int(x2), :]
 
-                # process license plate
+               
                 license_plate_crop_gray = cv2.cvtColor(license_plate_crop, cv2.COLOR_BGR2GRAY)
                 _, license_plate_crop_thresh = cv2.threshold(license_plate_crop_gray, 64, 255, cv2.THRESH_BINARY_INV)
 
-                # read license plate number
+                # читаем номерной знак
                 license_plate_text, license_plate_text_score = read_license_plate(license_plate_crop_thresh)
 
                 if license_plate_text is not None:
@@ -65,5 +65,5 @@ while ret:
                                                                     'bbox_score': score,
                                                                     'text_score': license_plate_text_score}}
 
-# write results
+# записываем результаты
 write_csv(results, './test.csv')
