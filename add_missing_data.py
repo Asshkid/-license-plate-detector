@@ -37,7 +37,6 @@ def interpolate_bounding_boxes(data):
                 prev_license_plate_bbox = license_plate_bboxes_interpolated[-1]
 
                 if frame_number - prev_frame_number > 1:
-                    # Interpolate missing frames' bounding boxes
                     frames_gap = frame_number - prev_frame_number
                     x = np.array([prev_frame_number, frame_number])
                     x_new = np.linspace(prev_frame_number, frame_number, num=frames_gap, endpoint=False)
